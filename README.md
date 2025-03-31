@@ -1,5 +1,9 @@
 # UniFuncs 网络搜索工具
 
+<div align="center">
+  <img src="image.png" alt="UniFuncs Logo" width="200">
+</div>
+
 这是一个基于 UniFuncs Web Search API 的搜索工具包，提供了多种使用方式和丰富的搜索结果展示。
 
 ## 安装和配置
