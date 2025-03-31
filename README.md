@@ -1,4 +1,4 @@
-# UniFuncs 网络搜索工具1
+# UniFuncs 网络搜索工具
 
 <div align="center">
   <img src="image.png" alt="UniFuncs Logo" width="200">
