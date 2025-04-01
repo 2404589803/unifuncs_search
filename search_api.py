@@ -21,11 +21,130 @@ class UniFuncsSearch:
                            "2. 设置环境变量UNIFUNCS_API_KEY\n"
                            "3. 在config.py中设置DEFAULT_API_KEY")
         
-        self.base_url = "https://api.unifuncs.com/api/web-search/search"
+        self.base_url = "https://api.unifuncs.com/api"
         self.headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}"
         }
+
+    def read_webpage(self, url, format="markdown", include_images=True, include_videos=False,
+                    include_position=False, only_css_selectors=None, wait_for_css_selectors=None,
+                    exclude_css_selectors=None, link_summary=False):
+        """
+        解析网页内容
+        
+        参数:
+            url (str): 需要解析的网页URL
+            format (str): 返回格式，可选值：markdown、md、text、txt、json，默认为markdown
+            include_images (bool): 是否包含图片，默认为True
+            include_videos (bool): 是否包含视频，默认为False
+            include_position (bool): 是否包含元素位置信息，默认为False
+            only_css_selectors (list): 仅包含匹配CSS选择器的元素，默认为None
+            wait_for_css_selectors (list): 等待这些CSS选择器元素出现后再解析页面，默认为None
+            exclude_css_selectors (list): 排除匹配CSS选择器的元素，默认为None
+            link_summary (bool): 是否包含链接摘要，默认为False
+            
+        返回:
+            dict: API返回的结果
+        """
+        # 构建请求URL和参数
+        endpoint = f"{self.base_url}/web-reader/read"
+        
+        payload = {
+            "url": url,
+            "format": format,
+            "includeImages": include_images,
+            "includeVideos": include_videos,
+            "includePosition": include_position,
+            "linkSummary": link_summary
+        }
+        
+        # 添加可选的CSS选择器参数
+        if only_css_selectors:
+            payload["onlyCSSSelectors"] = only_css_selectors
+        if wait_for_css_selectors:
+            payload["waitForCSSSelectors"] = wait_for_css_selectors
+        if exclude_css_selectors:
+            payload["excludeCSSSelectors"] = exclude_css_selectors
+            
+        try:
+            response = requests.post(endpoint, headers=self.headers, json=payload)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": str(e), "code": -1}
+        except json.JSONDecodeError:
+            return {"error": "解析响应失败", "code": -1}
+
+    def read_webpage_get(self, url, format="markdown", include_images=True, include_videos=False,
+                        include_position=False, only_css_selectors=None, wait_for_css_selectors=None,
+                        exclude_css_selectors=None, link_summary=False):
+        """
+        使用GET方法解析网页内容
+        
+        参数与read_webpage相同，但使用GET请求而不是POST
+        """
+        # URL编码处理
+        import urllib.parse
+        encoded_url = urllib.parse.quote(url, safe='')
+        
+        # 构建请求URL和参数
+        endpoint = f"{self.base_url}/web-reader/{encoded_url}"
+        
+        params = {
+            "format": format,
+            "includeImages": str(include_images).lower(),
+            "includeVideos": str(include_videos).lower(),
+            "includePosition": str(include_position).lower(),
+            "linkSummary": str(link_summary).lower()
+        }
+        
+        # 添加可选的CSS选择器参数
+        if only_css_selectors:
+            params["onlyCSSSelectors"] = ",".join(only_css_selectors)
+        if wait_for_css_selectors:
+            params["waitForCSSSelectors"] = ",".join(wait_for_css_selectors)
+        if exclude_css_selectors:
+            params["excludeCSSSelectors"] = ",".join(exclude_css_selectors)
+            
+        try:
+            response = requests.get(endpoint, headers=self.headers, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": str(e), "code": -1}
+        except json.JSONDecodeError:
+            return {"error": "解析响应失败", "code": -1}
+
+    def read_webpage_post(self, params):
+        """
+        使用POST方法解析网页内容
+        
+        参数:
+            params (dict): 请求参数，包含以下字段：
+                url (str): 需要解析的URL
+                format (str): 返回格式，可选值：markdown、md、text、txt、json
+                includeImages (bool): 是否包含图片
+                includeVideos (bool): 是否包含视频
+                includePosition (bool): 是否包含元素位置信息
+                onlyCSSSelectors (list): 仅包含匹配CSS选择器的元素
+                waitForCSSSelectors (list): 等待这些CSS选择器元素出现后再解析页面
+                excludeCSSSelectors (list): 排除匹配CSS选择器的元素
+                linkSummary (bool): 是否包含链接摘要
+            
+        返回:
+            dict: API返回的结果
+        """
+        endpoint = f"{self.base_url}/web-reader/read"
+        
+        try:
+            response = requests.post(endpoint, headers=self.headers, json=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": str(e), "code": -1}
+        except json.JSONDecodeError:
+            return {"error": "解析响应失败", "code": -1}
 
     def search(self, query, freshness=None, summary=True, page=1, count=10):
         """
@@ -41,6 +160,7 @@ class UniFuncsSearch:
         返回:
             dict: API返回的结果
         """
+        endpoint = f"{self.base_url}/web-search/search"
         payload = {
             "query": query,
             "summary": summary,
@@ -52,7 +172,7 @@ class UniFuncsSearch:
             payload["freshness"] = freshness
             
         try:
-            response = requests.post(self.base_url, headers=self.headers, json=payload)
+            response = requests.post(endpoint, headers=self.headers, json=payload)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:

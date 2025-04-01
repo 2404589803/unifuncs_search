@@ -62,7 +62,7 @@ def search_web(query, api_key, freshness, result_count, output_format):
     if not web_pages and not images:
         return "未找到搜索结果"
     
-    # 生成HTML卡片式展示
+    # 生成HTML结果
     html_output = """
     <style>
     .search-container {
@@ -77,11 +77,6 @@ def search_web(query, api_key, freshness, result_count, output_format):
         margin: 10px 0;
         background: white;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .search-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .search-card h3 {
         margin: 0 0 10px 0;
@@ -89,9 +84,6 @@ def search_web(query, api_key, freshness, result_count, output_format):
     .search-card h3 a {
         color: #1a0dab;
         text-decoration: none;
-    }
-    .search-card h3 a:hover {
-        text-decoration: underline;
     }
     .search-card .url {
         color: #006621;
@@ -102,22 +94,12 @@ def search_web(query, api_key, freshness, result_count, output_format):
     .search-card .snippet {
         color: #545454;
         line-height: 1.4;
-    }
-    .search-card .site-info {
-        display: flex;
-        align-items: center;
-        margin-bottom: 8px;
-    }
-    .search-card .site-icon {
-        width: 16px;
-        height: 16px;
-        margin-right: 8px;
-        flex-shrink: 0;
-        border-radius: 50%;
+        margin-bottom: 12px;
     }
     .search-card .site-name {
         color: #666;
         font-size: 0.9em;
+        margin-bottom: 8px;
     }
     .image-grid {
         display: grid;
@@ -130,18 +112,7 @@ def search_web(query, api_key, freshness, result_count, output_format):
         border-radius: 8px;
         overflow: hidden;
         background: white;
-        transition: transform 0.2s, box-shadow 0.2s;
         aspect-ratio: 1;
-        position: relative;
-    }
-    .image-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    .image-card a {
-        display: block;
-        height: 100%;
-        text-decoration: none;
     }
     .image-card img {
         width: 100%;
@@ -149,27 +120,27 @@ def search_web(query, api_key, freshness, result_count, output_format):
         object-fit: contain;
         background: #f8f8f8;
     }
-    .image-card .image-info {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: rgba(0,0,0,0.7);
-        color: white;
-        padding: 8px;
-        font-size: 0.8em;
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-    .image-card:hover .image-info {
-        opacity: 1;
-    }
     h2 {
         margin: 20px 0;
         color: #333;
         font-size: 1.5em;
         border-bottom: 2px solid #eee;
         padding-bottom: 8px;
+    }
+    .visit-button {
+        display: inline-block;
+        padding: 5px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        background-color: #4CAF50;
+        color: white;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+    .visit-button:hover {
+        opacity: 0.9;
     }
     </style>
     <div class="search-container">
@@ -181,22 +152,11 @@ def search_web(query, api_key, freshness, result_count, output_format):
         for image in images:
             thumbnail_url = image.get('thumbnailUrl', '')
             content_url = image.get('contentUrl', '')
-            host_page_url = image.get('hostPageUrl', '')
-            width = image.get('width', '')
-            height = image.get('height', '')
-            
             if thumbnail_url and content_url:
-                # 处理URL中的特殊字符
-                safe_thumbnail_url = thumbnail_url.replace('"', '%22').replace("'", '%27')
-                safe_content_url = content_url.replace('"', '%22').replace("'", '%27')
-                
                 html_output += f"""
                 <div class="image-card">
-                    <a href="{safe_content_url}" target="_blank" title="点击查看原图">
-                        <img src="{safe_thumbnail_url}" alt="搜索结果图片" loading="lazy">
-                        <div class="image-info">
-                            {f'{width}x{height}' if width and height else ''}
-                        </div>
+                    <a href="{content_url}" target="_blank">
+                        <img src="{thumbnail_url}" alt="搜索结果图片" loading="lazy">
                     </a>
                 </div>
                 """
@@ -211,21 +171,14 @@ def search_web(query, api_key, freshness, result_count, output_format):
             display_url = page.get('displayUrl', url)
             snippet = page.get('summary', page.get('snippet', '无摘要'))
             site_name = page.get('siteName', '')
-            site_icon = page.get('siteIcon', '')
-            
-            # 处理URL中的特殊字符
-            safe_url = url.replace('"', '%22').replace("'", '%27')
-            safe_site_icon = site_icon.replace('"', '%22').replace("'", '%27') if site_icon else ''
             
             html_output += f"""
             <div class="search-card">
-                <div class="site-info">
-                    {f'<img class="site-icon" src="{safe_site_icon}" alt="{site_name}">' if site_icon else ''}
-                    <span class="site-name">{site_name}</span>
-                </div>
-                <h3><a href="{safe_url}" target="_blank">{title}</a></h3>
+                <div class="site-name">{site_name}</div>
+                <h3><a href="{url}" target="_blank">{title}</a></h3>
                 <div class="url">{display_url}</div>
                 <div class="snippet">{snippet}</div>
+                <a href="{url}" target="_blank" class="visit-button">访问网页</a>
             </div>
             """
     
@@ -249,7 +202,7 @@ def create_ui():
         这是一个基于UniFuncs API的网络搜索工具，可以获取实时网络信息。
         """)
         
-        with gr.Tab("基本搜索"):
+        with gr.Tab("搜索"):
             with gr.Row():
                 with gr.Column(scale=4):
                     query_input = gr.Textbox(
@@ -295,9 +248,7 @@ def create_ui():
                     search_btn = gr.Button("搜索", variant="primary")
                 
                 with gr.Column(scale=6):
-                    result_output = gr.HTML(
-                        label="搜索结果"
-                    )
+                    result_output = gr.HTML()
             
             search_btn.click(
                 search_with_progress,
@@ -315,7 +266,7 @@ def create_ui():
             gr.Markdown("""
             ## 关于UniFuncs API
             
-            UniFuncs是专为AI应用打造的API平台，提供Web Search等多种服务。
+            UniFuncs是专为AI应用打造的API平台，提供Web Search API服务。
             
             ### Web Search API特点
             - 高速稳定：秒级响应(1-3s)
